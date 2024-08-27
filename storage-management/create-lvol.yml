@@ -1,0 +1,10 @@
+---
+- name: task for creating logical volume
+  lvol:
+    vg: "{{vg}}"
+    lv:  "{{lv}}"
+    size: "{{size}}"
+    resizefs: "{{resizefs}}"
+    force: yes
+
+                 

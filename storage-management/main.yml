@@ -1,0 +1,53 @@
+# Add a new disk to both managed nodes xvdc. Use the entire /dev/xvdc to create a new physical volume and a volume group with the name #vgcontainer with the following requirements:
+
+#    Volume group extent size is 10MB
+#    Create a new logical volume named lvdolfinlab with the size of 40 extents
+#    Mount the filesystem using XFS on mountpoint /mnt/vgdolphinlab
+#    Make changes permanent after reboots
+
+
+---       
+- name: playbook for creating LVs
+  hosts: all
+  become: true
+  vars:   
+    disk: /dev/xvdc
+    vg: vgcontainer
+    lv: lvdolfinlab
+    lv_path: /dev/{{vg}}/{{lv}}/
+    fstype: xfs
+  tasks:  
+    - name: Create a new primary partition for LVM
+      community.general.parted:
+        device:  "{{disk}}"
+        number:  "{{item['partition_number']}}"
+        flags: [ lvm ]
+        state: present
+        part_start: "{{item['part_start']}}"
+        part_end: "{{item['partition_size']}}"
+        fs_type: "{{fstype}}"
+      loop:
+        - partition_number: 1
+          partition_size: 1GiB
+          part_start: 1MB
+        - partition_number: 2
+          partition_size: 2GiB
+          part_start: 1GB
+    - name: install lvm2
+      import_tasks: install-lvm2.yml  
+    - name: create volume group
+      import_tasks: create-volg.yml
+      vars:
+        pvs: /dev/xvdc1,/dev/xvdc2
+        pesize: 10MB
+    - name: create LV
+      import_tasks: create-lvol.yml
+      vars:
+        size: 900m
+        resizefs: yes
+    - name: create file system
+      import_tasks: filesystem.yml
+    - name: mounting
+      import_tasks: mount.yml
+      vars:
+        mount_point: /mnt/vgdolphinlab

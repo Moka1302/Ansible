@@ -1,0 +1,6 @@
+---
+- name: Install lvm2 dependency
+  package:
+    name: lvm2
+    state: present
+                     

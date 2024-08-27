@@ -1,0 +1,22 @@
+---
+- name: create Ec2 Instances
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - keys.yml
+  tasks:
+    - name: creating new EC2 Instances
+      amazon.aws.ec2_instance:
+        aws_access_key: "{{ AWS_ACCESS_KEY_ID }}"
+        aws_secret_key: "{{ AWS_SECRET_ACCESS_KEY }}"
+        ec2_region: XXX
+        key_name: example-key
+        instance_type: t2.micro
+        image_id: XXX
+        security_group: default
+        count: 2
+        vpc_subnet_id: XXX
+        network:
+          assign_public_ip: true
+        tags:
+          Name: example-ec2

@@ -1,0 +1,14 @@
+- name: Create directory if does not exist
+  file:
+    path: "{{mount_point}}"
+    state: directory
+    mode: '0755'
+- name: Get UUID
+  shell: 'lsblk /dev/mapper/{{vg}}-{{lv}} -no uuid'
+  register: uuid
+- name: mount the lv 
+  mount:
+    path: "{{mount_point}}"
+    src: "{{uuid['stdout']}}"
+    fstype: "{{fstype}}"
+    state: mounted

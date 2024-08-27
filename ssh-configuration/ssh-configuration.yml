@@ -1,0 +1,52 @@
+#Automate the User creation and authentication process on your environment by developing the following steps:
+
+#    Create a group called DevOps
+#    Create a number of users Eissa, Ahmed, and Mirna who are going to be members of the DevOps team while keeping their primary group as it is
+#    Create SSH key for the group of users of 2048 bits and key to be stored under .ssh/x_id_rsa where x is the name of the user
+#    Use the authorized_key module to setup key-based authentication for the list of users
+#    Fix sudo to run all commands without a password for the created list of users
+
+---              
+- name: creating users and groups
+  hosts: all     
+  vars_files:
+    - credentials
+  vars:          
+    users_list:  
+      - Eissa    
+      - Ahmed    
+      - Mirna    
+  tasks:         
+    - name: creating group DevOps
+      group:     
+        name: DevOps
+        state: present
+    - name: creating users Eissa, Ahmed and Mirna in DevOps group
+      user:      
+        name: "{{item}}"
+        groups: DevOps
+        append: yes
+        password: "{{password}}"
+      loop: "{{users_list}}"
+    - name: generating ssh key
+      user:      
+        name: "{{item}}"
+        ssh_key_bits: 2048
+        ssh_key_file: /home/{{item}}/.ssh/{{item}}_id_rsa
+        generate_ssh_key: yes
+      loop: "{{users_list}}"
+    - name: retreiving ssh key
+      shell: "cat /home/{{item}}/.ssh/{{item}}_id_rsa.pub"
+      register: ssh_public_key_array
+      loop: "{{users_list}}"
+    - name: creating authorized_keys file for users
+      ansible.posix.authorized_key:
+        key: "{{item['stdout']}}"
+        user: "{{item['item']}}"
+      loop: "{{ssh_public_key_array['results']}}"
+    - name: Fix sudo to run all commands without a password for the created list of users
+      community.general.sudoers:
+        name: devops_group
+        group: DevOps
+        commands: ALL
+        runas: ALL

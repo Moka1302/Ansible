@@ -1,0 +1,4 @@
+- name: format the xfs filesystem
+  filesystem:
+     fstype: "{{fstype}}"
+     dev: "/dev/{{vg}/{{lv}}"
